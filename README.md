@@ -3,9 +3,9 @@ Notify Webs Change
 
 Get notified of tracked web pages. To set it up follow the next steps:
 
-#. fill your settings in the `.env` file.
-#. Install all requirements: `pip install -r requirements.txt`.
-#. Add a cron job in your machine. For Linux systems you add the following line
+1. fill your settings in the `.env` file.
+2. Install all requirements: `pip install -r requirements.txt`.
+3. Add a cron job in your machine. For Linux systems you add the following line
    in crontab:
 
 ```

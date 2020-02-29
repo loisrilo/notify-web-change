@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import requests
 import hashlib
 import shelve
+from datetime import datetime
 
 from settings import WEB_LIST
 from mail import MailServer
@@ -49,7 +50,8 @@ def main():
             res, notify = compare_hashes(new_hash, prev_hash)
             if notify:
                 to_notify.append(web)
-            print("%s: %s" % (store_name, res))
+            date = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+            print("%s - %s: %s" % (date, store_name, res))
             # Store new hash:
             db[store_name] = new_hash
 
