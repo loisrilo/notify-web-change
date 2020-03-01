@@ -13,7 +13,8 @@ class MailServer:
         return self
 
     def __exit__(self, *args):
-        self.server.quit()
+        if self.server:
+            self.server.quit()
 
     @staticmethod
     def _connect():
@@ -37,8 +38,9 @@ class MailServer:
         self.server.sendmail(MAIL_ACCOUNT, dest, msg)
         print("%s - Notification change sent to %s" % (date, dest))
 
-    def send_notification(self, web):
+    def send_notification(self, web, diff):
         subject = "%s has changed" % web
-        body = "A change has been detected in your tracked website %s" % web
+        body = "A change has been detected in your tracked website " \
+               "%s:\n\n%s" % (web, diff)
         for email in NOTIFY_MAILS.split(","):
             self._send_email(subject, body, email)

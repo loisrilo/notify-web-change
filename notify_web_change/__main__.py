@@ -5,6 +5,7 @@ import requests
 import hashlib
 import shelve
 from datetime import datetime
+import difflib
 
 from settings import WEB_LIST
 from mail import MailServer
@@ -22,13 +23,13 @@ def generate_hash(text):
     return hash.hexdigest()
 
 
-def _get_store_name(url):
+def _get_store_names(url):
     url = url.replace("https://", "")
     url = url.replace("http://", "")
     url = url.replace("www.", "")
     name = url.replace(".", "_")
     name = name.replace("/", "_")
-    return "hash_" + name
+    return "hash_" + name, "body_" + name
 
 
 def compare_hashes(h1, h2):
@@ -39,25 +40,38 @@ def compare_hashes(h1, h2):
     return "Changes detected.", True
 
 
+def compare_bodies(elem_1, elem_2):
+    res = ""
+    for diff in difflib.Differ().compare(
+            str(elem_1).split("\\n"), str(elem_2).split("\\n")):
+        if diff[0] in ["+", "-", "?"]:
+            res += diff + "\n"
+    return res
+
+
 def main():
     to_notify = []
     with shelve.open('hashes.db') as db:
         for web in WEB_LIST.split(","):
             body = get_website_body(web)
             new_hash = generate_hash(body)
-            store_name = _get_store_name(web)
-            prev_hash = db.get(store_name)
+            hast_name, body_name = _get_store_names(web)
+            prev_hash = db.get(hast_name)
             res, notify = compare_hashes(new_hash, prev_hash)
             if notify:
-                to_notify.append(web)
+                old_body = db.get(body_name)
+                diff = compare_bodies(
+                    body.prettify().encode('utf-8'), old_body)
+                to_notify.append((web, diff))
             date = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-            print("%s - %s: %s" % (date, store_name, res))
+            print("%s - %s: %s" % (date, hast_name, res))
             # Store new hash:
-            db[store_name] = new_hash
+            db[hast_name] = new_hash
+            db[body_name] = body.prettify().encode('utf-8')
 
     with MailServer() as smtp:
-        for website in to_notify:
-            smtp.send_notification(website)
+        for website, diff in to_notify:
+            smtp.send_notification(website, diff)
 
 
 if __name__ == "__main__":
