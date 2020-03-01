@@ -55,8 +55,8 @@ def main():
         for web in WEB_LIST.split(","):
             body = get_website_body(web)
             new_hash = generate_hash(body)
-            hast_name, body_name = _get_store_names(web)
-            prev_hash = db.get(hast_name)
+            hash_name, body_name = _get_store_names(web)
+            prev_hash = db.get(hash_name)
             res, notify = compare_hashes(new_hash, prev_hash)
             if notify:
                 old_body = db.get(body_name)
@@ -64,9 +64,9 @@ def main():
                     body.prettify().encode('utf-8'), old_body)
                 to_notify.append((web, diff))
             date = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-            print("%s - %s: %s" % (date, hast_name, res))
+            print("%s - %s: %s" % (date, hash_name, res))
             # Store new hash:
-            db[hast_name] = new_hash
+            db[hash_name] = new_hash
             db[body_name] = body.prettify().encode('utf-8')
 
     with MailServer() as smtp:
