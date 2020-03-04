@@ -7,6 +7,7 @@ load_dotenv(dotenv_path)
 
 # Accessing variables.
 WEB_LIST = os.getenv("WEB_LIST")
+THRESHOLD = os.getenv("THRESHOLD")
 SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 MAIL_ACCOUNT = os.getenv("MAIL_ACCOUNT")

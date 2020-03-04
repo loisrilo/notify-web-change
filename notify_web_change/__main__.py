@@ -7,7 +7,7 @@ import shelve
 from datetime import datetime
 import difflib
 
-from settings import WEB_LIST
+from settings import WEB_LIST, THRESHOLD
 from mail import MailServer
 
 
@@ -40,10 +40,10 @@ def compare_hashes(h1, h2):
     return "Changes detected.", True
 
 
-def compare_bodies(elem_1, elem_2):
+def compare_bodies(old, new):
     res = ""
     for diff in difflib.Differ().compare(
-            str(elem_1).split("\\n"), str(elem_2).split("\\n")):
+            str(old).split("\\n"), str(new).split("\\n")):
         if diff[0] in ["+", "-", "?"]:
             res += diff + "\n"
     return res
@@ -61,7 +61,7 @@ def main():
             if notify:
                 old_body = db.get(body_name)
                 diff = compare_bodies(
-                    body.prettify().encode('utf-8'), old_body)
+                    old_body, body.prettify().encode('utf-8'))
                 to_notify.append((web, diff))
             date = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
             print("%s - %s: %s" % (date, hash_name, res))
@@ -71,6 +71,13 @@ def main():
 
     with MailServer() as smtp:
         for website, diff in to_notify:
+            # each change implies 3 lines of diff.
+            if diff.count("\n") / 3 < THRESHOLD:
+                date = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+                print("%s - Changes for %s below threshold. Skip "
+                      "notification." % (date, website))
+                continue
+
             smtp.send_notification(website, diff)
 
 
